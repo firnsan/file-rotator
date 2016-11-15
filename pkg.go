@@ -43,7 +43,7 @@ func NewFileRotater(filePath string) (*FileRotater, error) {
 	w := &FileRotater{
 		Filename: filePath,
 		MaxLines: 1000000,
-		MaxSize:  1 << 28, //256 MB
+		MaxSize:  1 << 24, //16 MB
 		Daily:    false,
 		MaxDays:  7,
 		Rotate:   true,
