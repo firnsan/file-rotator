@@ -11,7 +11,7 @@ These are it's features:
 
 # Usage
 
-This is a example shows how to create a `file rotater` and combine with the `logrus`  
+This is a example shows how to create a `file rotater` and combine with the `logrus` and the golang standard `log` library.
 ```
 import (
     log "github.com/Sirupsen/logrus"
