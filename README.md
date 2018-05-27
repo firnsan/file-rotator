@@ -1,4 +1,4 @@
-# About file_rotater
+# About file-rotater
 This is a golang library helps to write content into file and automatically rotate the file. 
 It implements `io.Writer` and `io.Closer`, so you can combine it with golang  standard `log` library, or others log library such as `logrus`.
 
@@ -15,7 +15,7 @@ This is a example shows how to create a `file rotater` and combine with the `log
 ```
 import (
     log "github.com/Sirupsen/logrus"
-    rotater "github.com/firnsan/file_rotater"
+    rotater "github.com/firnsan/file-rotater"
     "io"
     stdlog "log"
     "os"
