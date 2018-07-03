@@ -41,7 +41,7 @@ type FileRotater struct {
 func NewFileRotater(filePath string) (*FileRotater, error) {
 	var err error
 	w := &FileRotater{
-		Filename: filePath,
+		Filename: filepath.Clean(filePath),
 		MaxLines: 1000000,
 		MaxSize:  1 << 24, //16 MB
 		Daily:    false,
@@ -49,6 +49,7 @@ func NewFileRotater(filePath string) (*FileRotater, error) {
 		Rotate:   true,
 		Perm:     0660,
 	}
+
 	w.suffix = filepath.Ext(w.Filename)
 	w.fileNameOnly = strings.TrimSuffix(w.Filename, w.suffix)
 	if w.suffix == "" {
@@ -91,7 +92,7 @@ func (w *FileRotater) Write(b []byte) (n int, err error) {
 			w.Lock()
 			if w.needRotate(len(b)) {
 				if err := w.doRotate(); err != nil {
-					fmt.Fprintf(os.Stderr, "FileRotater(%q): %s\n", w.Filename, err)
+					fmt.Fprintf(os.Stderr, "FileRotater.Write: rotate failed: %s, path: %s\n", err, w.Filename)
 				}
 			}
 			w.Unlock()
@@ -118,7 +119,7 @@ func (w *FileRotater) initFd() error {
 	fd := w.fileWriter
 	fInfo, err := fd.Stat()
 	if err != nil {
-		return fmt.Errorf("get stat err: %s\n", err)
+		return fmt.Errorf("FileRotater.initFd: get stat err: %s\n", err)
 	}
 	w.maxSizeCurSize = int(fInfo.Size())
 	w.dailyOpenDate = time.Now().Day()
@@ -163,12 +164,9 @@ func (w *FileRotater) lines() (int, error) {
 // DoRotate means it need to write file in new file.
 // new file name like xx.2013-01-01.log (daily) or xx.001.log (by line or size)
 func (w *FileRotater) doRotate() error {
+	var err error
 	now := time.Now()
-	_, err := os.Lstat(w.Filename)
-	if err != nil {
-		return err
-	}
-	// file exists
+
 	// Find the next available number
 	num := 1
 	fName := ""
@@ -183,41 +181,46 @@ func (w *FileRotater) doRotate() error {
 	}
 	// return error if the last file checked still existed
 	if err == nil {
-		return fmt.Errorf("Rotate: Cannot find free file name number to rename %s\n", w.Filename)
+		return fmt.Errorf("FileRotater.doRotate: cannot find free file name number to rename %s\n", w.Filename)
 	}
 
 	// close fileWriter before rename
 	w.fileWriter.Close()
 
 	// Rename the file to its new found name
-	// even if occurs error,we MUST guarantee to  restart new rotater
+	// even if occurs error,we MUST guarantee to restart new rotater
 	renameErr := os.Rename(w.Filename, fName)
 	// re-start rotater
 	startErr := w.startRotater()
-	go w.deleteOldFile()
+	go w.deleteOldFiles()
 
 	if startErr != nil {
-		return fmt.Errorf("Rotate StartRotater: %s\n", startErr)
+		return fmt.Errorf("FileRotater.doRotate: restart rotater failed: %s\n", startErr)
 	}
-	if renameErr != nil {
-		return fmt.Errorf("Rotate: %s\n", renameErr)
+	if renameErr != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("FileRotater.doRotate: rename failed: %s\n", renameErr)
 	}
 	return nil
 
 }
 
-func (w *FileRotater) deleteOldFile() {
+func (w *FileRotater) deleteOldFiles() {
 	dir := filepath.Dir(w.Filename)
 	filepath.Walk(dir, func(path string, info os.FileInfo, err error) (returnErr error) {
-		defer func() {
-			if r := recover(); r != nil {
-				fmt.Fprintf(os.Stderr, "Unable to delete old file '%s', error: %v\n", path, r)
-			}
-		}()
+		if path == w.Filename {
+			// We don't need to delete the w.Filename, because it is always up to date,
+			// and the w.Filename may not exsit because some race condition
+			return
+		}
+		if err != nil {
+			// Because some race condition, the file may not exsit now
+			fmt.Fprintf(os.Stderr, "FileRotater.deleteOldFiles: unable to get file info: %s, path: %s\n", err, path)
+			return
+		}
 
 		if !info.IsDir() && info.ModTime().Unix() < (time.Now().Unix()-60*60*24*w.MaxDays) {
-			if strings.HasPrefix(filepath.Base(path), w.fileNameOnly) &&
-				strings.HasSuffix(filepath.Base(path), w.suffix) {
+			if strings.HasPrefix(path, w.fileNameOnly) &&
+				strings.HasSuffix(path, w.suffix) {
 				os.Remove(path)
 			}
 		}
