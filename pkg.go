@@ -56,7 +56,7 @@ func NewFileRotater(filePath string) (*FileRotater, error) {
 		w.suffix = ".log"
 	}
 
-	err = w.startRotater()
+	err = w.doRotate()
 	return w, err
 }
 
@@ -162,7 +162,7 @@ func (w *FileRotater) lines() (int, error) {
 }
 
 // DoRotate means it need to write file in new file.
-// new file name like xx.2013-01-01.log (daily) or xx.001.log (by line or size)
+// new file name like xx.2013-01-01.log (daily) or xx.2013-01-01.001.log (by line or size)
 func (w *FileRotater) doRotate() error {
 	var err error
 	now := time.Now()
@@ -185,7 +185,9 @@ func (w *FileRotater) doRotate() error {
 	}
 
 	// close fileWriter before rename
-	w.fileWriter.Close()
+	if w.fileWriter != nil {
+		w.fileWriter.Close()
+	}
 
 	// Rename the file to its new found name
 	// even if occurs error,we MUST guarantee to restart new rotater
