@@ -171,8 +171,8 @@ func (w *FileRotater) doRotate() error {
 	num := 1
 	fName := ""
 	if w.MaxLines > 0 || w.MaxSize > 0 {
-		for ; err == nil && num <= 999; num++ {
-			fName = w.fileNameOnly + fmt.Sprintf(".%s.%03d%s", now.Format("2006-01-02"), num, w.suffix)
+		for ; err == nil && num <= 9999; num++ {
+			fName = w.fileNameOnly + fmt.Sprintf(".%s.%04d%s", now.Format("2006-01-02"), num, w.suffix)
 			_, err = os.Lstat(fName)
 		}
 	} else {
