@@ -1,4 +1,4 @@
-# About file-rotater
+# About file-rotator
 This is a golang library helps to write content into file and automatically rotate the file. 
 It implements `io.Writer` and `io.Closer`, so you can combine it with golang  standard `log` library, or others log library such as `logrus`.
 
@@ -11,11 +11,11 @@ These are it's features:
 
 # Usage
 
-This is a example shows how to create a `file rotater` and combine with the `logrus` and the golang standard `log` library.
+This is a example shows how to create a `file rotator` and combine with the `logrus` and the golang standard `log` library.
 ```
 import (
     log "github.com/Sirupsen/logrus"
-    rotater "github.com/firnsan/file-rotater"
+    rotator "github.com/firnsan/file-rotator"
     "io"
     stdlog "log"
     "os"
@@ -28,8 +28,8 @@ func InitLog() error {
         log.Errorf("Parse log level failed: %s", err)
         return err 
     }   
-    // Create a file rotater
-    fw, err := rotater.NewFileRotater(gApp.Cnf.LogDir + "/app.log")
+    // Create a file rotator
+    fw, err := rotator.NewFileRotator(gApp.Cnf.LogDir + "/app.log")
     if err != nil {
         log.Errorf("Set log failed: %s", err)
         return err 

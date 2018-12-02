@@ -1,4 +1,4 @@
-package file_rotater
+package file_rotator
 
 import (
 	"log"
@@ -12,9 +12,9 @@ var (
 )
 
 func TestDoRotate(t *testing.T) {
-	fw, err := NewFileRotater(filePath)
+	fw, err := NewFileRotator(filePath)
 	if err != nil {
-		log.Printf("new rotater failed failed: %s", err)
+		log.Printf("new rotator failed failed: %s", err)
 		t.FailNow()
 	}
 	err = fw.doRotate()
@@ -27,9 +27,9 @@ func TestDoRotate(t *testing.T) {
 }
 
 func TestDoRotateFileNotFound(t *testing.T) {
-	fw, err := NewFileRotater(filePath)
+	fw, err := NewFileRotator(filePath)
 	if err != nil {
-		log.Printf("new rotater failed: %s", err)
+		log.Printf("new rotator failed: %s", err)
 		t.FailNow()
 	}
 	os.Remove(filePath)
@@ -43,9 +43,9 @@ func TestDoRotateFileNotFound(t *testing.T) {
 }
 
 func TestDeleteOldFile(t *testing.T) {
-	fw, err := NewFileRotater(filePath)
+	fw, err := NewFileRotator(filePath)
 	if err != nil {
-		log.Printf("new rotater failed: %s", err)
+		log.Printf("new rotator failed: %s", err)
 		t.FailNow()
 	}
 	fw.deleteOldFiles()
